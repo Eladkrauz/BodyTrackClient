@@ -78,6 +78,8 @@ class CameraSessionActivity : AppCompatActivity() {
     private var sessionTimer: CountDownTimer? = null
     private var durationSeconds = 120
     private var cameraSide: String = CameraSide.FRONT.name.lowercase()
+    private var audioFeedbackEnabled: Boolean = true
+    private var textFeedbackEnabled: Boolean = true
 
     // Stage machine (FSM).
     private enum class Stage {
@@ -175,6 +177,8 @@ class CameraSessionActivity : AppCompatActivity() {
         durationSeconds = intent.getIntExtra("duration_seconds", 120)
         cameraSide = intent.getStringExtra("camera_side")
             ?: CameraSide.FRONT.name.lowercase()
+        audioFeedbackEnabled = intent.getBooleanExtra("audio_feedback", true)
+        textFeedbackEnabled = intent.getBooleanExtra("text_feedback", true)
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
@@ -474,12 +478,13 @@ class CameraSessionActivity : AppCompatActivity() {
                 // Respect beep suppression.
                 if (suppressTts) return
 
-                Toast.makeText(this, result.description, Toast.LENGTH_SHORT).show()
-
-                // Speak feedback.
-                ttsManager.speak(result.description)
-
-
+                // Display and/or play feedback.
+                if (textFeedbackEnabled) {
+                    Toast.makeText(this, result.description, Toast.LENGTH_SHORT).show()
+                }
+                if (audioFeedbackEnabled) {
+                    ttsManager.speak(result.description)
+                }
             }
 
             else -> {}

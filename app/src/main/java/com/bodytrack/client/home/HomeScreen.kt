@@ -9,6 +9,7 @@ package com.bodytrack.client.home
 ///////////////
 /// IMPORTS ///
 ///////////////
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.annotation.OptIn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -47,6 +49,7 @@ import androidx.media3.ui.PlayerView
 import com.bodytrack.client.exercise.ExerciseType
 import com.bodytrack.client.exercise.displayName
 import com.bodytrack.client.R
+import androidx.core.net.toUri
 
 //////////////////////////////
 /// HOME SCREEN COMPOSABLE ///
@@ -75,7 +78,7 @@ fun HomeScreen(
 ) {
 
     // UI state.
-    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showAboutUsDialog by remember { mutableStateOf(false) }
 
      // Session preference flags.
     var extendedEvaluation by remember { mutableStateOf(false) }
@@ -111,9 +114,9 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            IconButton(onClick = { showSettingsDialog = true }) {
+            IconButton(onClick = { showAboutUsDialog = true }) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
+                    imageVector = Icons.Default.Info,
                     contentDescription = "Settings"
                 )
             }
@@ -203,111 +206,100 @@ fun HomeScreen(
         }
     }
 
-    ///////////////////////
-    /// SETTINGS DIALOG ///
-    ///////////////////////
-    if (showSettingsDialog) {
+    if (showAboutUsDialog) {
         AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = { Text("Settings") },
+            onDismissRequest = { showAboutUsDialog = false },
+            title = { Text("About Us") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    SettingToggle(
-                        title = "Extended Evaluation",
-                        description = "Analyze a wider set of joint angles.",
-                        checked = extendedEvaluation,
-                        onCheckedChange = { extendedEvaluation = it }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    // --- Who We Are ---
+                    Text(
+                        text = "Who We Are",
+                        fontWeight = FontWeight.Bold
                     )
-                    HorizontalDivider()
-                    SettingToggle(
-                        title = "Audio Feedback",
-                        description = "Enable spoken feedback during sessions.",
-                        checked = audioFeedbackEnabled,
-                        onCheckedChange = { audioFeedbackEnabled = it }
+                    Text(
+                        text = "We are Elad Krauz and Uri Ziv, final-year Software Engineering students. " +
+                                "BodyTrack is our graduation project, created as part of our academic journey."
                     )
-                    HorizontalDivider()
-                    Column {
-                        Text(
-                            text = "Camera",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                    Divider()
+
+                    // --- LinkedIn ---
+                    Text(
+                        text = "Visit Our LinkedIn",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        LinkedInButton(
+                            name = "Elad Krauz",
+                            url = "https://www.linkedin.com/in/elad-krauz/"
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "Choose which camera to use for filming.",
-                            color = Color.Gray,
-                            fontSize = 16.sp
+                        Spacer(modifier = Modifier.width(12.dp))
+                        LinkedInButton(
+                            name = "Uri Ziv",
+                            url = "https://www.linkedin.com/in/uriziv"
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CameraSide.entries.forEach { side ->
-                                Row(
-                                    Modifier
-                                        .selectable(
-                                            selected = cameraSide == side,
-                                            onClick = { cameraSide = side }
-                                        )
-                                        .padding(end = 16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(
-                                        selected = cameraSide == side,
-                                        onClick = { cameraSide = side }
-                                    )
-                                    Text(
-                                        text = if (side == CameraSide.REAR) "Rear" else "Front",
-                                        modifier = Modifier.padding(start = 4.dp),
-                                        fontSize = 16.sp
-                                    )
-                                }
-                            }
-                        }
                     }
+                    Divider()
+
+                    // --- Goal ---
+                    Text(
+                        text = "Our Goal",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Our goal is to help people better understand their body movements during exercise. " +
+                                "We want to provide clear and useful feedback that supports safer and more confident training."
+                    )
+                    Divider()
+
+                    // --- Vision ---
+                    Text(
+                        text = "Our Vision",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "We believe technology can make movement guidance more accessible and intuitive. " +
+                                "Our vision is to create tools that feel simple to use, yet meaningful and helpful in everyday workouts."
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             },
-
             confirmButton = {
-                TextButton(onClick = { showSettingsDialog = false }) {
-                    Text("Done", fontSize = 16.sp)
+                TextButton(onClick = { showAboutUsDialog = false }) {
+                    Text("Back", fontSize = 16.sp)
                 }
             }
         )
     }
 }
 
-//////////////////////
-/// SETTING TOGGLE ///
-//////////////////////
+////////////////////////
+/// LINKED IN BUTTON ///
+////////////////////////
 @Composable
-fun SettingToggle(
-    title: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+fun LinkedInButton(
+    name: String,
+    url: String
 ) {
-    /*
-     * Reusable toggle row for settings.
-     * Stateless except for parameters passed in.
-     */
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+    val context = LocalContext.current
+
+    OutlinedButton(
+        onClick = {
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            context.startActivity(intent)
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = description,
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
+    ) {
+        Text(name)
     }
 }
+
 
 /////////////////////
 /// EXERCISE CARD ///

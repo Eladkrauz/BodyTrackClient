@@ -418,22 +418,17 @@ object SessionApi {
      * This signals the server to begin the real-time evaluation process.
      *
      * @param sessionId The unique identifier for the session to be started.
-     * @param extendedEvaluation A boolean flag indicating if detailed, resource-intensive
-     *   evaluation should be performed. Set to `true` for more in-depth analysis, or `false`
-     *   for standard evaluation.
      * @param onResult A callback function that will be invoked with the result of the
      *   operation, either a [SessionResult.Success] or a [SessionResult.Error]/[SessionResult.NetworkFailure].
      */
     fun startSession(
         sessionId: String,
-        extendedEvaluation: Boolean,
         onResult: (SessionResult) -> Unit
     ) {
         sendPost(
             "start/session",
             JSONObject()
-                .put("session_id", sessionId)
-                .put("extended_evaluation", extendedEvaluation),
+                .put("session_id", sessionId),
             onResult
         )
     }

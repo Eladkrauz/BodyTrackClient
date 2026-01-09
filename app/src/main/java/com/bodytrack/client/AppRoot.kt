@@ -115,13 +115,6 @@ fun AppRoot() {
     var selectedExercise by remember { mutableStateOf<ExerciseType?>(null) }
 
     /*
-     * Flag indicating whether extended evaluation is enabled.
-     *
-     * This value is passed to the backend when starting a session.
-     */
-    var extendedEvaluationEnabled by remember { mutableStateOf(false) }
-
-    /*
     Camera side.
      */
     var cameraSideChosen by remember { mutableStateOf(CameraSide.FRONT) }
@@ -174,6 +167,12 @@ fun AppRoot() {
      *  - No error dialog is visible
      */
     var errorDialogMessage by remember { mutableStateOf<String?>(null) }
+
+    ////////////////////////
+    /// SESSION FEEDBACK ///
+    ////////////////////////
+    var audioFeedbackEnabled by remember { mutableStateOf(true) }
+    var textFeedbackEnabled by remember { mutableStateOf(true) }
 
     //////////////////////////////
     /// CAMERA ACTIVITY LAUNCH ///
@@ -365,6 +364,14 @@ fun AppRoot() {
                             ExerciseType.SQUAT -> R.raw.squats_animation
                             ExerciseType.BICEPS_CURL -> R.raw.biceps_curls_animation
                         },
+                        audioFeedbackEnabled = audioFeedbackEnabled,
+                        onAudioFeedbackChanged = { audioFeedbackEnabled = it },
+
+                        textFeedbackEnabled = textFeedbackEnabled,
+                        onTextFeedbackChanged = { textFeedbackEnabled = it },
+
+                        cameraSide = cameraSideChosen,
+                        onCameraSideChanged = { cameraSideChosen = it },
                         positionSide = exercise.positionSide(),
                         initialPhaseName = exercise.initialPhaseName(),
 
@@ -402,8 +409,7 @@ fun AppRoot() {
                             sessionDurationSeconds = durationSeconds
 
                             SessionApi.startSession(
-                                sessionId = safeSessionId,
-                                extendedEvaluation = extendedEvaluationEnabled
+                                sessionId = safeSessionId
                             ) { result ->
                                 when (result) {
                                     is SessionResult.Success -> {
@@ -447,6 +453,8 @@ fun AppRoot() {
                         putExtra("session_id", sessionId)
                         putExtra("duration_seconds", sessionDurationSeconds)
                         putExtra("camera_side", cameraSideChosen.name.lowercase())
+                        putExtra("audio_feedback", audioFeedbackEnabled)
+                        putExtra("text_feedback", textFeedbackEnabled)
                     }
                     cameraSessionLauncher.launch(intent)
                 }

@@ -16,12 +16,14 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bodytrack.client.home.CameraSide
 
 /////////////////////////////
 /// EXERCISE SETUP SCREEN ///
@@ -61,8 +64,15 @@ fun ExerciseSetupScreen(
     sessionId: String,
     exerciseName: String,
     videoResId: Int,
+    audioFeedbackEnabled: Boolean,
+    onAudioFeedbackChanged: (Boolean) -> Unit,
+    textFeedbackEnabled: Boolean,
+    onTextFeedbackChanged: (Boolean) -> Unit,
+    cameraSide: CameraSide,
+    onCameraSideChanged: (CameraSide) -> Unit,
     positionSide: PositionSide,
     initialPhaseName: String,
+
     onBack: () -> Unit,
     onStartSession: (durationSeconds: Int) -> Unit
 ) {
@@ -71,9 +81,11 @@ fun ExerciseSetupScreen(
     var remainingSeconds by remember { mutableStateOf(120) } // 2 minutes
     var showTimeoutDialog by remember { mutableStateOf(false) }
     var showDurationDialog by remember { mutableStateOf(false) }
-    var selectedDuration by remember { mutableStateOf<Int?>(null) }
     var customDurationInput by remember { mutableStateOf("") }
     var isStartingSession by remember { mutableStateOf(false) }
+    var selectedDuration by remember { mutableStateOf(30) } // DEFAULT = 30
+    var isCustomDuration by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         while (remainingSeconds > 0 && !isStartingSession) {
@@ -361,61 +373,185 @@ fun ExerciseSetupScreen(
     }
 
     //////////////////////////
-    /// DURATION SELECTION ///
+    //// DURATION SELECTION ///
     //////////////////////////
     if (showDurationDialog) {
+        // Local dialog state
+        var selectedDuration by remember { mutableStateOf(30) }
+        var useCustomDuration by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { showDurationDialog = false },
-            title = { Text("Choose session duration") },
+            title = {
+                Text(
+                    "Session Settings",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text =
-                            "This session will run for a predefined time.\n" +
-                                    "If you finish early, stay in the initial position\n" +
-                                    "or press END during the session.",
-                        fontSize = 14.sp,
-                        color = _root_ide_package_.com.bodytrack.client.theme.TextGray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    listOf(15, 30, 45, 60).forEach { seconds ->
-                        OutlinedButton(
-                            onClick = {
-                                selectedDuration = seconds
-                                showDurationDialog = false
-                                isStartingSession = true
-                                onStartSession(seconds)
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+
+                    // ───────── Feedback ─────────
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(2.dp) // 👈 tight spacing
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Text("Audio Feedback")
+                            Switch(
+                                checked = audioFeedbackEnabled,
+                                onCheckedChange = onAudioFeedbackChanged
+                            )
+                        }
+
+                        Text(
+                            text = "If set to off – audio feedback during the session itself won't be played. Audio instructions will be played before session starts.",
+                            color = Color.Gray,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(start = 2.dp) // optional subtle indent
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Text Feedback")
+                            Switch(
+                                checked = textFeedbackEnabled,
+                                onCheckedChange = onTextFeedbackChanged
+                            )
+                        }
+
+                        Text(
+                            text = "If set to on – textual feedback will be shown only during the session itself, not in the instructions stage.",
+                            color = Color.Gray,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(start = 2.dp)
+                        )
+                    }
+
+                    Divider()
+
+                    // ───────── Camera ─────────
+                    Text("Camera", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CameraSide.entries.forEach { side ->
+                            Row(
+                                Modifier.selectable(
+                                    selected = cameraSide == side,
+                                    onClick = { onCameraSideChanged(side) }
+                                ),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = cameraSide == side,
+                                    onClick = { onCameraSideChanged(side) }
+                                )
+                                Text(
+                                    text = if (side == CameraSide.FRONT)
+                                        "Front"
+                                    else
+                                        "Rear"
+                                )
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    // ───────── Duration ─────────
+                    Text("Session Duration", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+                    listOf(15, 30, 45, 60).forEach { seconds ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = selectedDuration == seconds && !useCustomDuration,
+                                    onClick = {
+                                        selectedDuration = seconds
+                                        useCustomDuration = false
+                                    }
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedDuration == seconds && !useCustomDuration,
+                                onClick = {
+                                    selectedDuration = seconds
+                                    useCustomDuration = false
+                                }
+                            )
                             Text("$seconds seconds")
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = customDurationInput,
-                        onValueChange = { input ->
-                            customDurationInput = input.filter { it.isDigit() }
-                        },
-                        label = { Text("Custom (seconds, max 120)") },
-                        singleLine = true
-                    )
+
+                    // Custom duration
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = useCustomDuration,
+                            onClick = { useCustomDuration = true }
+                        )
+                        OutlinedTextField(
+                            value = customDurationInput,
+                            onValueChange = {
+                                customDurationInput = it.filter(Char::isDigit)
+                                useCustomDuration = true
+                            },
+                            label = { Text("Custom (10–120 seconds)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
+
+            // ───────── Start Button ─────────
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val custom = customDurationInput.toIntOrNull()
-                        if (custom != null && custom in 10..120) {
+                        val finalDuration =
+                            if (useCustomDuration)
+                                customDurationInput.toIntOrNull()
+                            else
+                                selectedDuration
+
+                        if (finalDuration != null && finalDuration in 10..120) {
                             showDurationDialog = false
                             isStartingSession = true
-                            onStartSession(custom)
+                            onStartSession(finalDuration)
                         }
                     }
                 ) {
                     Text("Start")
                 }
             },
+
             dismissButton = {
                 TextButton(onClick = { showDurationDialog = false }) {
                     Text("Cancel")
