@@ -506,6 +506,12 @@ class CameraSessionActivity : AppCompatActivity() {
 
             override fun onTick(ms: Long) {
                 val secondsLeft = ms / 1000
+
+                // 8 seconds before end, stop accepting new TTS.
+                if (secondsLeft == 8L) {
+                    ttsManager.suppressNewSpeech()
+                }
+
                 if (secondsLeft in 1..5) {
                     suppressTts = true
                     if (beepLoaded) {

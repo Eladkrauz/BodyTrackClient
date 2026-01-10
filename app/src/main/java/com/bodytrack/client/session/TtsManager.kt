@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class TtsManager(context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val isReady = AtomicBoolean(false)
+    private val suppress = AtomicBoolean(false)
     private var onDoneCallback: (() -> Unit)? = null
 
     private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
@@ -68,6 +69,16 @@ class TtsManager(context: Context) {
         })
     }
 
+    ///////////////////////////
+    /// SUPPRESS NEW SPEECH ///
+    ///////////////////////////
+    /**
+     * Sets whether new speech requests should be suppressed.
+     */
+    fun suppressNewSpeech() {
+        suppress.set(true)
+    }
+
     /////////////
     /// SPEAK ///
     /////////////
@@ -83,6 +94,7 @@ class TtsManager(context: Context) {
      */
     fun speak(text: String, onCompleted: (() -> Unit)? = null) {
         if (!isReady.get()) return
+        if (suppress.get()) return
         onDoneCallback = onCompleted
         tts.speak(
             text,

@@ -416,6 +416,13 @@ fun ExerciseSetupScreen(
                         }
 
                         Text(
+                            text = "It is possible that some feedbacks won't be played, to prevent overwhelming experience. After the session ends, you will see the entire analysis in the summary screen.",
+                            color = Color.Gray,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(start = 2.dp) // optional subtle indent
+                        )
+
+                        Text(
                             text = "If set to off – audio feedback during the session itself won't be played. Audio instructions will be played before session starts.",
                             color = Color.Gray,
                             fontSize = 11.sp,
@@ -483,6 +490,12 @@ fun ExerciseSetupScreen(
 
                     // ───────── Duration ─────────
                     Text("Session Duration", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "On the last 5 seconds, you will hear a beep sound to indicate the end of the session.",
+                        color = Color.Gray,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(start = 2.dp)
+                    )
 
                     listOf(15, 30, 45, 60).forEach { seconds ->
                         Row(
