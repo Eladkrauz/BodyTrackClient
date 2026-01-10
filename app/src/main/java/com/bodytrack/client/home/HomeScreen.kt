@@ -174,13 +174,13 @@ fun HomeScreen(
                     onClick = { onExerciseSelected(ExerciseType.SQUAT, cameraSide) }
                 )
             }
-            item {
-                ExerciseCard(
-                    exerciseName = ExerciseType.BICEPS_CURL.displayName(),
-                    videoResId = R.raw.biceps_curls_animation,
-                    onClick = { onExerciseSelected(ExerciseType.BICEPS_CURL, cameraSide) }
-                )
-            }
+//            item {
+//                ExerciseCard(
+//                    exerciseName = ExerciseType.BICEPS_CURL.displayName(),
+//                    videoResId = R.raw.biceps_curls_animation,
+//                    onClick = { onExerciseSelected(ExerciseType.BICEPS_CURL, cameraSide) }
+//                )
+//            }
 
             // Placeholder item.
             item {

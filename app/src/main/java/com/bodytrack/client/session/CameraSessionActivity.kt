@@ -80,6 +80,7 @@ class CameraSessionActivity : AppCompatActivity() {
     private var cameraSide: String = CameraSide.FRONT.name.lowercase()
     private var audioFeedbackEnabled: Boolean = true
     private var textFeedbackEnabled: Boolean = true
+    private var pendingAbortMessage: String? = null
 
     // Stage machine (FSM).
     private enum class Stage {
@@ -458,10 +459,25 @@ class CameraSessionActivity : AppCompatActivity() {
 
             is SessionResult.Error -> {
                 if (result.code == ErrorCode.SESSION_SHOULD_ABORT) {
-                    if (!suppressTts) {
-                        ttsManager.speak("You are not visible. Aborting session.")
+
+                    // Prevent repeated triggers.
+                    if (stage == Stage.ENDED) return
+
+                    // Store message for dialog.
+                    pendingAbortMessage =
+                        "The system could not detect a visible person in the frame.\n\n" +
+                                "Therefore, the session was aborted."
+
+                    // End session immediately (server + local cleanup).
+                    endSession(
+                        reason = SessionEndReason.ABORTED,
+                        finishActivity = false
+                    )
+
+                    // Show dialog on UI thread.
+                    runOnUiThread {
+                        showAbortDialog()
                     }
-                    endSession(SessionEndReason.ABORTED)
                 }
             }
 
@@ -628,20 +644,54 @@ class CameraSessionActivity : AppCompatActivity() {
      *
      * @param reason The reason why the session is being ended (e.g., COMPLETED, ABORTED).
      */
-    private fun endSession(reason: SessionEndReason) {
+    private fun endSession(
+        reason: SessionEndReason,
+        finishActivity: Boolean = true
+    ) {
         if (stage == Stage.ENDED) return
         stage = Stage.ENDED
+
         sessionTimer?.cancel()
         frameAnalyzer.stopSending()
 
         SessionApi.endSession(sessionId) {
-            if (reason == SessionEndReason.COMPLETED) {
-                setResult(RESULT_OK)
+            if (finishActivity) {
+                if (reason == SessionEndReason.COMPLETED) {
+                    setResult(RESULT_OK)
+                } else {
+                    setResult(RESULT_CANCELED)
+                }
+                finish()
             }
-            else {
-                setResult(RESULT_CANCELED)
-            }
-            finish()
+            // else: wait for user confirmation.
         }
+    }
+
+    /////////////////////////
+    /// SHOW ABORT DIALOG ///
+    /////////////////////////
+    /**
+     * Displays an alert dialog to the user when a session is forcefully aborted by the system.
+     *
+     * This dialog informs the user of the specific reason for the abort (stored in
+     * [pendingAbortMessage]), typically due to visibility or positioning issues detected
+     * by the backend. It provides a single "OK" button that, when clicked, sets the
+     * activity result to `RESULT_CANCELED` and closes the activity.
+     *
+     * This is used to ensure the user receives a visual explanation for the sudden
+     * termination of their session before returning to the previous screen.
+     */
+    private fun showAbortDialog() {
+        val message = pendingAbortMessage ?: return
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Session Ended")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("OK") { _, _ ->
+                setResult(RESULT_CANCELED)
+                finish()
+            }
+            .show()
     }
 }
