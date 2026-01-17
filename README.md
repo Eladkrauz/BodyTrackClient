@@ -1,7 +1,7 @@
-# BodyTrack – Android Client
+# BodyTrack - Android Client
 
 ## Overview
-This repository contains the Android client application of the BodyTrack system – a real-time body posture analysis and feedback platform developed as a final software engineering project.
+This repository contains the Android client application of the BodyTrack system - a real-time body posture analysis and feedback platform developed as a final software engineering project.
 
 The Android application is responsible for capturing live video during training sessions, communicating with the backend server, and presenting real-time feedback to the user through visual and audio cues.
 
@@ -21,7 +21,7 @@ The client focuses on interaction, responsiveness, and usability.
 ## Technologies Used
 - Kotlin
 - Android SDK
-- CameraX – camera frame capture
+- CameraX - camera frame capture
 - Android Jetpack Components
 - HTTP networking for server communication
 - Text-to-Speech (TTS) for audio feedback
@@ -55,9 +55,9 @@ The structure follows a modular design, separating camera handling, networking, 
 
 ## Permissions
 The application requires the following permissions:
-- Camera – for capturing live exercise video
-- Internet – for communication with the backend server
-- Audio output – for spoken feedback (Text-to-Speech)
+- Camera - for capturing live exercise video
+- Internet - for communication with the backend server
+- Audio output - for spoken feedback (Text-to-Speech)
 
 Permissions are requested at runtime according to Android guidelines.
 
